@@ -356,7 +356,7 @@ typedef enum ShowFormat
 #define BYTES_INVALID		(-1) /* file didn`t changed since previous backup, DELTA backup do not rely on it */
 #define FILE_NOT_FOUND		(-2) /* file disappeared during backup */
 #define BLOCKNUM_INVALID	(-1)
-#define PROGRAM_VERSION	"2.5.15"
+#define PROGRAM_VERSION	"2.5.16"
 
 /* update when remote agent API or behaviour changes */
 #define AGENT_PROTOCOL_VERSION 20509
@@ -431,6 +431,8 @@ typedef struct InstanceConfig
 extern ConfigOption instance_options[];
 extern InstanceConfig instance_config;
 extern time_t current_time;
+extern bool no_validate;
+extern IncrRestoreMode incremental_mode;
 
 typedef struct PGNodeInfo
 {
@@ -805,9 +807,12 @@ extern pid_t    my_pid;
 extern __thread int my_thread_num;
 extern int		num_threads;
 extern bool		stream_wal;
+extern bool		no_color;
 extern bool		show_color;
 extern bool		progress;
+extern bool		no_sync;
 extern bool     is_archive_cmd; /* true for archive-{get,push} */
+extern time_t	start_time;
 /* In pre-10 'replication_slot' is defined in receivelog.h */
 extern char	   *replication_slot;
 #if PG_VERSION_NUM >= 100000
@@ -816,6 +821,7 @@ extern bool 	temp_slot;
 extern bool perm_slot;
 
 /* backup options */
+extern bool		backup_logs;
 extern bool		smooth_checkpoint;
 
 /* remote probackup options */
@@ -827,7 +833,14 @@ extern bool exclusive_backup;
 extern bool		delete_wal;
 extern bool		delete_expired;
 extern bool		merge_expired;
+extern bool		force;
 extern bool		dry_run;
+
+/* archive push options */
+extern int		batch_size;
+
+/* archive get options */
+extern bool		no_validate_wal;
 
 /* ===== instanceState ===== */
 
@@ -858,11 +871,18 @@ typedef struct InstanceState
 
 /* show options */
 extern ShowFormat show_format;
+extern bool show_archive;
+
+/* set backup options */
+extern int64 ttl;
 
 /* checkdb options */
+extern bool need_amcheck;
 extern bool heapallindexed;
 extern bool checkunique;
+extern bool amcheck_parent;
 extern bool skip_block_validation;
+extern bool skip_external_dirs;
 
 /* current settings */
 extern pgBackup current;
@@ -1227,7 +1247,6 @@ extern const char *base36enc_to(long unsigned int value, char buf[ARG_SIZE_HINT 
 extern long unsigned int base36dec(const char *text);
 extern uint32 parse_server_version(const char *server_version_str);
 extern uint32 parse_program_version(const char *program_version);
-void check_server_version(PGconn *conn, PGNodeInfo *nodeInfo);
 extern bool   parse_page(Page page, XLogRecPtr *lsn);
 extern int32  do_compress(void* dst, size_t dst_size, void const* src, size_t src_size,
 						  CompressAlg alg, int level, const char **errormsg);
